@@ -11,7 +11,7 @@ Nous allons dans un premier construire une représentation du système finale av
 
 ### Schéma bloc fonctionnel
 
-<img width="750" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/e43b916c-166f-418b-aadc-7f19f364fbc9">
+![image](https://github.com/ESN2024/Jacquet_lab2/assets/127327962/b1ade232-76d7-4f5d-ac43-e7931cb02953)
 
 Ce schéma présente l'architecture finale de notre système, la liaison entre notre pc et le système cible, ici la DE10 lite, via un câble USB Blaster. Ici nous visualisons uniquement les périphériques décris dans nos objectifs, évidemment la clock n'apparaît pas, ainsi que le signal de reset présent sur un second bouton poussoire.
 L'architecture comporte ainsi différents modules important : 
@@ -38,10 +38,6 @@ Nous retrouvons donc une visualisations de nos broches, avec en dessous nos diff
 
 <img width="524" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/1ed6c888-9472-42e5-a9fa-6643230d793a">
 
-Ces données sont trouvés dans la datasheet de notre modèle :
-
-<img width="304" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/6c46a233-e41d-43f8-af4b-1643cc6ee7e9">
-
 Une fois l'intégralité de nos signaux récupérés, nous pouvons fermé Pin Planner, revenir sur Quartus et lancer le Compile Design afin de compiler l'entiereté de nos système et récupérer les fichiers nécessaires à la suite du développement de notre projet.
 
 ### Génération de la BSP
@@ -63,12 +59,6 @@ Afin de piloter nos périphériques de façon à créer un chenillard de leds, l
    #include <sys/alt_irq.h>: Gère les fonctions liées aux interruptions dans les systèmes Nios II d'Altera.
    #include "altera_avalon_pio_regs.h": Fournit des définitions et des fonctions pour manipuler les registres des blocs PIO d'Altera.
    
-2. Développement d'une interruption de lancement
-   Lors de la création du système sous Platform Designer nous avons généré des interuptions pour nos PIO 1 et 2, ici nous allons donc expliquer le raisonnement pour notre PIO_1, de 1 bit, suffisant pour récuperer l'état du switch key 1 (PIN_A7) et généré une interuption de notre programme :
-   <img width="617" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/cb03e11d-36ab-49ca-b321-7bf2c127558e">
-
-   Cette fonction d'interruption possède quelques particularité, déjà son objectif est d'activer le chenillard lors d'une pression sur le switch key 1, et de le laisser activer, sans pour autant interroger l'état du bouton à tout instant jusqu'à ce qu'il le soit. Nous allons commencer par décrire sa fonction d'interruption dans ce code en C, puis ses fonctionnalités propre au chenillard. La particularité est qu'il n'y a aucune réinitialisation du registre d'interruption, c'est à dire que lorsqu'elle est déclenché cette fonction sera executé en boucle pour répondre au cahier des charges donné. Concernant sa partie lié au chenillard nous pouvons voir un IF qui vérifie que la valeur de la variable globale data qui est la donnée correspondante a la valeur hexadécimale du périphériques de LED, il vérifie que nous n'avons pas atteint la valeur de la dernière led du chenillard, auquel cas il reviens à la première led. Cela nous permet de remplacer une boucle for par une simple condition et ainsi éviter des cycles de processeur inutiles et éviter de devoir répété une boucle for indéfiniment.
-Ensuite la ligne : IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE,data) permet de mettre à l'état haut les périphériques désigné par la valeur hexadécimale de data, par exemple 0x1, désignera le bit0 à 1, ce qui allumera la première LED, ou encore 0x3, qui allumera les deux premières LEDs. Cette fonction couplé à : data = data << 1 nous permet de décalé le bit à l'état haut d'un rang vers la gauche, ce qui permet d'éteindre la LED actuellement allumé et d'allumer celle sur sa gauche afin de réalisé le chenillard. Enfin la fonction de la vitesse du chenillard doit pouvoir être réglable, en effet entre chaque déplacement des bits de la donnée data nous devons instaurer une pause avec la fonction usleep : usleep((16-chaser_speed)*10000), cette ligne permet donc de régler le temps entre chaque passage de LED, chaser_speed correspond à la variable globale correspondant à la vitesse, 10000 à une constante de 10ms qui sera multiplié par un facteur de temps (16-chaser_speed), ce facteur permet donc de réduire le facteur de pause entre chaque LED lorsque la vitesse deviendra de plus en plus élevé.
 
 3. Développement de l'interruption de pilotage de la vitesse
    Nous avons besoin d'une interruption pour les déterminé les états des 4 switchs qui piloteront notre vitesse en renvoyant la valeur sur chaser_speed :
