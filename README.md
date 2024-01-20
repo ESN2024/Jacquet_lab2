@@ -16,9 +16,10 @@ Nous allons dans un premier construire une représentation du système finale av
 Ce schéma présente l'architecture finale de notre système, la liaison entre notre pc et le système cible, ici la DE10 lite, via un câble USB Blaster. Ici nous visualisons uniquement les périphériques décris dans nos objectifs, évidemment la clock n'apparaît pas, ainsi que le signal de reset présent sur un second bouton poussoire.
 L'architecture comporte ainsi différents modules important : 
 1. RAM : La mémoire avec une capacité de 40 Mo, amplement suffisant pour cette implémentation.
-2. 3 blocs PIO (Parrallel input/output) permettant au FPGA de communiquer avec l'extérieur en lisant des signaux d'entrées (récuperer les états des boutons poussoirs, switchs) et en envoyant des signaux de sortie (Allumage de leds). Deux de ces blocs PIO comporte des interuptions, mécanisme qui va signaler au processeur un évenement, celui ci va interrompre l'éxecution du programme en cours pour exécuter la fonction d'interuption. Ce processus remplace le polling qui scrutte en permanance l'arrivée du signal cherché, les interuptions sont un énorme gain de consomation.
+2. 3 blocs PIO (Parrallel input/output) permettant au FPGA de communiquer avec l'extérieur en lisant des signaux d'entrées et en envoyant des signaux de sortie.
 3. Processeur Nios II : Processeur soft-core configurable du FPGA présent sur la DE10 lite. En tant que soft-core, il est implémenté en logique programmable plutôt que fabriqué en tant que puce physique, Ce qui lui donne une nature configurable et nous permet de personnaliser le processeur en fonction de nos besoins spécifiques, réel gain de performances.
 4. Un module timer d'intervalle 1 seconde afin de pouvoir incrémenter comme convenu notre compteur.
+5. Des blocs VHDL afin de convertir nos données sur l'afficheur 7 segments.
 
 ### Création du système sous Platform Designer
 Après avoir crée sous Quartus 18.1 notre projet nous allons pouvoir avec l'outil Platform Designer crée notre système en déclarant l'ensemble des modules nécessaires ainsi que leurs configurations respectives.
@@ -28,7 +29,14 @@ Il faudra relier minutieusement ces différents modules pour les interconnecter 
 
 Lorsque ces étapes ont été réalisé et que Platform Designer ne renvois aucune erreur nous pouvons généré le VHDL correspondant à ce système en l'exportant (Generate/Generate HDL/Selectionner VHDL).
 
-### Création d'un module VHDL Binaire vers 7 segments
+### Création d'un module VHDL BCD7SEG
+
+Nous allons réaliser la description VHDL d'un composant qui permet d'afficher un mot de 4 bits sur un afficheur 7 segments. Ce composant consiste à transcrire un nombre compris entre 0 et 9 en un mot sur 7 bits correspondant à l'état haut ou bas de nos différents segments.
+
+### Création du Top Level
+
+Ce fichier VHDL consiste à réaliser un liant entre notre Qsys correspondant à nos modules instanciés ainsi que notre composants BCD7SEG, il relie donc ces deux composants à l'aide de signaux sur un Port Map décris en ligne de code.
+
 ### Intégration du design généré
 Nous allons maintenant revenir sous quartus et réalisé une étape fondamental qui consiste à relié nos broches à nos PIO. Cette étape est réalisé avec l'outil Pin Planner de Quartus (Assignments/Pin Planner). Avant cela il faudra réalisé le check Analysis & Synthesis pour vérifier notre développement jusque là et intégré l'assignation des broches. Une fois cette étape réalisé nous allons pouvoir lancé l'outil Pin Planner et assigné nos broches à nos PIO, attention il faut bien vérifié que le device est le même que le système cible auquel cas nos broches seront différentes (Quartus/Assignments/Device) ici nous développons sur la MAX 10 - 10M50DAF484C7G :
 
@@ -86,7 +94,6 @@ Voici la démonstration finale de notre programme en vidéo :
 [https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/ef314df1-0a86-4096-9aff-18ab99b545d9](https://github.com/ESN2024/Jacquet_Lab1/blob/main/IMG_3171.MOV)
 
 ## Conclusion
-
-Ce premier projet réalisé à été développé avec succès, malgrès certaines difficultés rencontrés. En effet c'était le premier projet réalisé avec Quartus sur une DE10 lite, ce qui nous à apporter des premières compétences dans ce domaine. La principale difficulté aura été la gestion des interruptions, comment les déclarer, et gérer leur déclechement ainsi que leurs réinitialisation en utilisant les fonctions adéquates. Nous sommes maintenant capable de généré une architecture système Qsys correcte ainsi que le pilotage et l'utilisation des différents périphériques disponible sur ce système cible, à l'aide de signaux gérés par les PIOs. Ces premiers pas en codesign nous ont permis de comprendre le réel intérêt de cette pratique dans le développement de projet tel que celui-ci.
+Ce second projet réalisé sur notre DE10 lite aura été légérement plus compliqué que le premier où la difficulté était dans l'utilisation des interuptions. Ici la difficulté était dans la création des blocs VHDL et leurs liens sous le Top Level. En effet le VHDL est un langage assez à part dans son écriture et il aura fallu se replonger dedans. La seconde difficulté était dans l'insertion d'un timer et son implémentation et utilisation dans notre code source afin d'incrémenter le compteur comme voulu.
 
 
