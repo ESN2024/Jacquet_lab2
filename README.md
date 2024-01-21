@@ -66,19 +66,17 @@ Afin de piloter nos périphériques de façon à créer un chenillard de leds, l
    #include <alt_types.h>: Définit des types de données spécifiques à Altera, comme alt_u32 pour les entiers non signés 32 bits.
    #include <sys/alt_irq.h>: Gère les fonctions liées aux interruptions dans les systèmes Nios II d'Altera.
    #include "altera_avalon_pio_regs.h": Fournit des définitions et des fonctions pour manipuler les registres des blocs PIO d'Altera.
-   
+   #include "altera_avalon_timer_regs.h":Fournit les fonctions liés au timer.
 
-3. Développement de l'interruption de pilotage de la vitesse
-   Nous avons besoin d'une interruption pour les déterminé les états des 4 switchs qui piloteront notre vitesse en renvoyant la valeur sur chaser_speed :
-   <img width="389" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/83151268-e341-4874-8e40-e6576d1c2726">
 
-   Cette fois ci nous avons bien une fonction de remise à 0 du registre d'interuption : IOWR_ALTERA_AVALON_PIO_EDGE_CAP(PIO_2_BASE, 0x0F), qui nous permet après chaque modification d'état d'un des switchs de renvoyer la valeur correcte de la vitesse du chenillard. Cette vitesse est renvoyé sur chaser_speed avec la fonction de lecture : chaser_speed = IORD_ALTERA_AVALON_PIO_DATA(PIO_2_BASE), qui nous permet de récuperer la valeur des 4 switchs déclaré dans notre PIO jusqu'à une valeur maximale de 15 et de l'afficher à l'aide de notre fonction alt_printf à chaque appel de l'interruption.
+2. Fonction d'interruption et de comptage lié au timer
+   Incrémente le compteur à chaque interruption du timer, c'est à dire toute les secondes, i prend donc la valeur de ce compteur et répartis ses unités, sa dizaine et    ses centaines dans trois valeurs u,d,c qui seront affiché chacune sur un 7 segments pour afficher la valeure correcte. Le compteur i est réinitialisé s'il dépasse    la valeur maximale 999 :
+ <img width="326" alt="image" src="https://github.com/ESN2024/Jacquet_lab2/assets/127327962/bf0e433a-b8c0-46a8-9576-71df5bdb2dbb">
 
-4. Fonction principale Main()
-   Fonction principale de notre code C, qui sera stoppé à chaque interruption le temps d'exécuter la fonction d'interruption :
-   <img width="620" alt="image" src="https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/37c86795-544d-4d45-bb66-4879e5884045">
+3. Fonction principale Main():
+   Fonction très minimaliste, mise à 0 du compteur au lancement du programme, déclaration de l'interruption lié au timer afin de déclencher la fonction à chaque état    d'interruption, ainsi qu'une boucle while pour rester dans cette fonction indéfiniment.
+   <img width="343" alt="image" src="https://github.com/ESN2024/Jacquet_lab2/assets/127327962/f7b8c361-8dda-4d25-9ec5-a50f6330266a">
 
-   Cette fonction commence par une partie d'initialisation des variables et des interruptions, la mise à 1 de la vitesse de notre chenillard par défault ainsi que l'activation des interruptions avec la fonction : IOWR_ALTERA_AVALON_PIO_IRQ_MASK défini à la valeur hexadécimale des périphériques potentiellement déclencheur de cette dernière, ainsi que la fonction IOWR_ALTERA_AVALON_PIO_EDGE_CAP qui permet l'initialisation ou la réinitialisation du registre d'interruptions, ici dans notre main nous l'initialisation une fois, le reste des réinitialisations se passera dans les fonctions d'interruptions. Enfin nous enregistrons les gestionnaires d'interruptions avec la fonction : alt_irq_register. Cette partie d'inititialisation est désormais fini, nous pouvons rentrer dans la boucle while(1) afin d'executer le programme en boucle en attendant uniquement le déclenchement des interruptions.
 
 ## Déploiement du projet sur le système cible
 
@@ -91,7 +89,7 @@ Ce Makefile nous permettra de compiler notre code C ainsi que l'intégralité de
 que nous allons déployer le programme, et à l'aide de Nios2-terminale.exe suivre les retours renvoyé par nos alt_printf sur notre terminale.
 
 Voici la démonstration finale de notre programme en vidéo : 
-[https://github.com/ESN2024/Jacquet_Lab1/assets/127327962/ef314df1-0a86-4096-9aff-18ab99b545d9](https://github.com/ESN2024/Jacquet_Lab1/blob/main/IMG_3171.MOV)
+(https://github.com/ESN2024/Jacquet_lab2/blob/main/IMG_3173.MOV)
 
 ## Conclusion
 Ce second projet réalisé sur notre DE10 lite aura été légérement plus compliqué que le premier où la difficulté était dans l'utilisation des interuptions. Ici la difficulté était dans la création des blocs VHDL et leurs liens sous le Top Level. En effet le VHDL est un langage assez à part dans son écriture et il aura fallu se replonger dedans. La seconde difficulté était dans l'insertion d'un timer et son implémentation et utilisation dans notre code source afin d'incrémenter le compteur comme voulu.
